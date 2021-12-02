@@ -1,53 +1,52 @@
-# New Project Template
+# Finger B-trees for C++
 
-This repository contains a template that can be used to seed a repository for a
-new Google open source project.
+**Disclaimer:* This is not an officially supported Google product.*
 
-See [go/releasing](http://go/releasing) (available externally at
-https://opensource.google/docs/releasing/) for more information about
-releasing a new Google open source project.
+## Objective
 
-This template uses the Apache license, as is Google's default.  See the
-documentation for instructions on using alternate license.
+Implement efficient, general purpose finger [B-tree] data structure on a par
+with open-source Google [Abseil](https://abseil.io/) tree data structures such
+as [`absl::btree_set`] or [`absl::btree_map`]
 
-## How to use this template
+[`absl::btree_set`]: https://github.com/abseil/abseil-cpp/blob/master/absl/container/btree_set.h
+[`absl::btree_map`]: https://github.com/abseil/abseil-cpp/blob/master/absl/container/btree_map.h
 
-1. Clone it from GitHub.
-    * There is no reason to fork it.
-1. Create a new local repository and copy the files from this repo into it.
-1. Modify README.md and docs/contributing.md to represent your project, not the
-   template project.
-1. Develop your new project!
+[Finger trees], lesser known outside the world of functional programming, have
+the same asymptotic characteristics as regular trees for general operations, but
+allow *O(1)* amortized time complexity on the leftmost and rightmost node.
 
-``` shell
-git clone https://github.com/google/new-project
-mkdir my-new-thing
-cd my-new-thing
-git init
-cp -r ../new-project/* ../new-project/.github .
-git add *
-git commit -a -m 'Boilerplate for new Google open source project'
-```
+[B-tree]: https://en.wikipedia.org/wiki/B-tree
+[Finger trees]: https://en.wikipedia.org/wiki/Finger_tree
 
-## Source Code Headers
+The implemented data structure will be:
 
-Every file containing source code must include copyright and license
-information. This includes any JS/CSS files that you might be serving out to
-browsers. (This is to help well-intentioned people avoid accidental copying that
-doesn't comply with the license.)
+-   Move-only for move-only elements.
+-   Copyable for copyable elements, with efficient sharing using a
+    [copy-on-write] technique, which avoids copying by sharing common nodes
+    (similar to [`absl::Cord`] and [`absl::Status`]).
 
-Apache header:
+[copy-on-write]: https://github.com/ppetr/refcounted-var-sized-class/blob/main/copy_on_write.h
+[`absl::Cord`]: https://github.com/abseil/abseil-cpp/blob/master/absl/strings/cord.h
+[`absl::Status`]: https://github.com/abseil/abseil-cpp/tree/master/absl/status
 
-    Copyright 2021 Google LLC
+By combining it with appropriate monoids (see [this blog-post][monoids]), derive
+further data structures, including:
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+-   Sequences with *O(1)* access to its ends (sum monoid, each element with
+    value of 1). Thus constructing a sequence by appending/prepending n elements
+    is *O(n)*.
+-   Cord, ditto (sum monoid, each element with value of its size).
+-   Sorted set/map with *O(1)* access to minimum and maximum (maximum monoid,
+    each element is its own monoid value). In particular, constructing such a
+    sorted set from a list of already ordered elements has *O(n)* time
+    complexity, compared to O(n log n) for the standard tree data structure.
 
-        https://www.apache.org/licenses/LICENSE-2.0
+-   Priority queue (maximum monoid, each element with value of its priority) -
+    priority queue with *O(1)* access to the first (and last) element.
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+[monoids]: https://apfelmus.nfshost.com/articles/monoid-fingertree.html
+
+## Contributions
+
+Please see [Code of Conduct](docs/code-of-conduct.md) and
+[Contributing](docs/contributing.md).
