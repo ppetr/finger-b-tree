@@ -36,20 +36,16 @@ function(FetchLibrary)
     if (package STREQUAL "")
         message(FATAL_ERROR "No package (non-option) argument given" ${package})
     endif()
-    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER_EQUAL 3.24)
-        # Look for local packages, otherwise download from the git repo.
-        FetchContent_Declare(
-            ${package}
-            GIT_REPOSITORY ${FETCH_LIBRARY_GIT_REPOSITORY}
-            GIT_TAG        ${FETCH_LIBRARY_GIT_TAG}
-            FIND_PACKAGE_ARGS ${FETCH_LIBRARY_FIND_PACKAGE_ARGS}
-            )
-    else()
+    set(find_package_args ${FETCH_LIBRARY_FIND_PACKAGE_ARGS})
+    list(REMOVE_ITEM find_package_args "REQUIRED")
+    find_package(${package} ${find_package_args} QUIET)
+    if(NOT ${package}_FOUND)
         FetchContent_Declare(
             ${package}
             GIT_REPOSITORY ${FETCH_LIBRARY_GIT_REPOSITORY}
             GIT_TAG        ${FETCH_LIBRARY_GIT_TAG}
             )
+        FetchContent_MakeAvailable(${package})
     endif()
 endfunction()
 
@@ -65,7 +61,7 @@ FetchLibrary(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG        e2239ee6043f73722e7aa812a459f54a28552929  # release-1.11.0
-    FIND_PACKAGE_ARGS REQUIRED EXCLUDE_FROM_ALL NAMES googletest GTest
+    FIND_PACKAGE_ARGS REQUIRED NAMES googletest GTest
     )
 
 # For the benchmarks below be sure to enable optimizations, for example:
@@ -75,10 +71,8 @@ FetchLibrary(
     benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG        db55c89f31385f8105f56ac8245a51777e94a628
-    FIND_PACKAGE_ARGS REQUIRED EXCLUDE_FROM_ALL NAMES benchmark
+    FIND_PACKAGE_ARGS REQUIRED NAMES benchmark
     )
-
-FetchContent_MakeAvailable(absl googletest benchmark)
 
 add_library(bi_ptr INTERFACE)
 target_include_directories(bi_ptr INTERFACE .)
